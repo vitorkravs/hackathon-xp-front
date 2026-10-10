@@ -9,7 +9,7 @@ npm install
 npm run dev
 ```
 
-Acesse [http://localhost:3000](http://localhost:3000). A entrada fica em `/`. As áreas protegidas têm rotas próprias: `/dashboard`, `/clientes`, `/conexoes` e `/oportunidades`.
+Acesse [http://localhost:3000](http://localhost:3000). A entrada fica em `/`. As áreas protegidas têm rotas próprias: `/dashboard`, `/clientes`, `/clientes/[id]`, `/conexoes` e `/oportunidades`. Cada módulo possui sua própria `page.tsx`; a estrutura visual compartilhada fica em `app/(authenticated)/components`.
 
 Para manter a indentação e a formatação do código, execute `npm run format`. Use `npm run format:check` para verificar sem alterar arquivos.
 
@@ -25,6 +25,8 @@ O fluxo inclui login, opção de manter a sessão por sete dias, logout, recuper
 - Painel responsivo com indicadores e evolução ilustrativa de patrimônio.
 - Busca e filtro de clientes, detalhes pessoais e financeiros, alocação e status do consentimento.
 - Visão de conexões Open Finance e oportunidades de acompanhamento.
+- Perfil individual de cliente com cadastro, composição da carteira, investimentos e indicadores.
+- Temas claro e escuro, sidebar recolhível ou expansível ao passar o mouse e opção para animar ou manter estáticos os ícones. As preferências ficam salvas neste navegador.
 - Exportação CSV dos clientes filtrados.
 - Fluxo demonstrativo de convite de cliente.
 
