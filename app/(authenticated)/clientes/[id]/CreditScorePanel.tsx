@@ -20,11 +20,9 @@ function scoreBand(score: number) {
 
 export function CreditScorePanel({
   assessment,
-  isMock,
   clientName,
 }: {
   assessment: CreditAssessment | null | undefined;
-  isMock?: boolean;
   clientName: string;
 }) {
   const score = assessment?.totalScore;
@@ -38,7 +36,7 @@ export function CreditScorePanel({
             <Activity size={19} /> Risco de crédito privado
           </h2>
         </div>
-        {isMock && <span className="analysis-sample">Dados fictícios</span>}
+        <span className="analysis-sample">Dados fictícios</span>
       </div>
 
       {score == null ? (

@@ -116,7 +116,12 @@ export function AdvisorShell({ children }: { children: React.ReactNode }) {
           }}
         >
           <div className="sidebar-top">
-            <Link href="/dashboard" className="brand" aria-label="XP Open Finance, visão geral">
+            <Link
+              href="/dashboard"
+              prefetch={false}
+              className="brand"
+              aria-label="XP Open Finance, visão geral"
+            >
               <span className="brand-mark">
                 <Image src="/xp-logo.svg" alt="XP Investimentos" width={31} height={31} />
               </span>
@@ -155,6 +160,7 @@ export function AdvisorShell({ children }: { children: React.ReactNode }) {
                 <Link
                   key={href}
                   href={href}
+                  prefetch={false}
                   className={`nav-item ${active ? "active" : ""}`}
                   aria-current={active ? "page" : undefined}
                   aria-label={compact ? label : undefined}

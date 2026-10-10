@@ -11,12 +11,14 @@ export function ClientsTable({
   onAll,
   compact = false,
   todayIso,
+  totalCount = clients.length,
 }: {
   filtered: Client[];
   onOpen: (client: Client) => void;
   onAll?: () => void;
   compact?: boolean;
   todayIso?: string;
+  totalCount?: number;
 }) {
   return (
     <section className="panel clients-panel">
@@ -110,7 +112,7 @@ export function ClientsTable({
       {!compact && (
         <div className="table-footer">
           <span>
-            Exibindo {filtered.length} de {clients.length} clientes
+            Exibindo {filtered.length} de {totalCount} clientes
           </span>
         </div>
       )}

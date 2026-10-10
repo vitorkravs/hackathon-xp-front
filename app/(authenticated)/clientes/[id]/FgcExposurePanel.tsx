@@ -6,13 +6,7 @@ const formatCurrency = (value: number | null | undefined) =>
     ? "Não disponível"
     : new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(value);
 
-export function FgcExposurePanel({
-  analysis,
-  isMock,
-}: {
-  analysis: FgcAnalysis | null | undefined;
-  isMock?: boolean;
-}) {
+export function FgcExposurePanel({ analysis }: { analysis: FgcAnalysis | null | undefined }) {
   return (
     <section className="panel analysis-panel" aria-labelledby="fgc-title">
       <div className="detail-section-heading analysis-heading">
@@ -22,7 +16,7 @@ export function FgcExposurePanel({
             <ShieldCheck size={19} /> Proteção FGC
           </h2>
         </div>
-        {isMock && <span className="analysis-sample">Dados fictícios</span>}
+        <span className="analysis-sample">Dados fictícios</span>
       </div>
 
       {!analysis ? (

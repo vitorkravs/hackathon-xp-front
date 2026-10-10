@@ -1,10 +1,10 @@
 "use client";
 
-import { useMemo, useState, useSyncExternalStore } from "react";
+import { useEffect, useMemo, useState, useSyncExternalStore } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Cake, Download, Filter, Plus, Search } from "lucide-react";
-import { clients, type Client } from "@/lib/mock-data";
+import type { Client } from "@/lib/mock-data";
 import { birthdayLabel, getUpcomingClientBirthdays } from "@/lib/client-birthdays";
 import { todayInSaoPaulo } from "@/lib/local-date";
 import { ClientsTable } from "../components/ClientsTable";
@@ -25,21 +25,68 @@ export default function ClientesPage() {
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState("Todos");
   const [inviteOpen, setInviteOpen] = useState(false);
+  const [loadedClients, setLoadedClients] = useState<Client[]>([]);
+  const [listStatus, setListStatus] = useState<"loading" | "ready" | "error">("loading");
+  const [requestVersion, setRequestVersion] = useState(0);
   const todayIso = useSyncExternalStore(
     subscribeToCalendar,
     () => todayInSaoPaulo(),
     () => null,
   );
-  const birthdays = todayIso ? getUpcomingClientBirthdays(clients, todayIso) : [];
+  useEffect(() => {
+    let active = true;
+    async function loadClients() {
+      try {
+        const response = await fetch("/api/clientes", {
+          cache: "no-store",
+        });
+        if (!active) return;
+        if (response.status === 401) {
+          router.replace("/");
+          return;
+        }
+        if (!response.ok) throw new Error("Falha na consulta de clientes.");
+        const payload: unknown = await response.json();
+        if (!active) return;
+        if (
+          !payload ||
+          typeof payload !== "object" ||
+          !("clients" in payload) ||
+          !Array.isArray(payload.clients) ||
+          !payload.clients.every(
+            (client) =>
+              client &&
+              typeof client.id === "number" &&
+              typeof client.name === "string" &&
+              typeof client.email === "string" &&
+              typeof client.profile === "string",
+          )
+        ) {
+          throw new Error("Resposta de clientes inválida.");
+        }
+        setLoadedClients(payload.clients as Client[]);
+        setListStatus("ready");
+      } catch {
+        if (active) setListStatus("error");
+      }
+    }
+    const timer = window.setTimeout(loadClients, 0);
+    return () => {
+      active = false;
+      window.clearTimeout(timer);
+    };
+  }, [requestVersion, router]);
+
+  const birthdays = todayIso ? getUpcomingClientBirthdays(loadedClients, todayIso) : [];
   const filtered = useMemo(
     () =>
-      clients.filter((client) => {
+      loadedClients.filter((client) => {
         const matches = `${client.name} ${client.email} ${client.profile}`
           .toLowerCase()
           .includes(search.toLowerCase());
         return matches && (filter === "Todos" || client.consent === filter);
       }),
-    [search, filter],
+    [loadedClients, search, filter],
   );
   const openClient = (client: Client) => router.push(`/clientes/${client.id}`);
   const exportCsv = () => {
@@ -102,7 +149,11 @@ export default function ClientesPage() {
             </div>
             <div className="birthday-notice-list">
               {birthdays.map((birthday) => (
-                <Link href={`/clientes/${birthday.client.id}`} key={birthday.client.id}>
+                <Link
+                  href={`/clientes/${birthday.client.id}`}
+                  key={birthday.client.id}
+                  prefetch={false}
+                >
                   <strong>{birthday.client.name}</strong>
                   <span>
                     {birthdayLabel(birthday)} · {String(birthday.day).padStart(2, "0")}/
@@ -136,13 +187,57 @@ export default function ClientesPage() {
               <option>Expirando</option>
             </select>
           </div>
-          <button className="secondary-button" onClick={exportCsv}>
+          <button
+            className="secondary-button"
+            onClick={exportCsv}
+            disabled={listStatus !== "ready"}
+          >
             <Download size={17} /> Exportar CSV
           </button>
         </div>
-        <ClientsTable filtered={filtered} onOpen={openClient} todayIso={todayIso ?? undefined} />
+        {listStatus === "loading" ? (
+          <ClientListSkeleton />
+        ) : listStatus === "error" ? (
+          <section className="panel client-load-error" role="alert">
+            <strong>Não foi possível carregar os clientes.</strong>
+            <p>Tente consultar a lista novamente.</p>
+            <button
+              className="secondary-button"
+              onClick={() => {
+                setListStatus("loading");
+                setRequestVersion((version) => version + 1);
+              }}
+            >
+              Tentar novamente
+            </button>
+          </section>
+        ) : (
+          <ClientsTable
+            filtered={filtered}
+            onOpen={openClient}
+            todayIso={todayIso ?? undefined}
+            totalCount={loadedClients.length}
+          />
+        )}
       </div>
       <InviteModal open={inviteOpen} onClose={() => setInviteOpen(false)} />
     </>
+  );
+}
+
+function ClientListSkeleton() {
+  return (
+    <section className="panel client-list-skeleton" role="status" aria-live="polite">
+      <span className="loading-copy">Carregando clientes...</span>
+      <div className="loading-bar loading-title" />
+      {Array.from({ length: 5 }, (_, index) => (
+        <div className="loading-table-row" key={index}>
+          <div className="loading-circle" />
+          <div className="loading-bar" />
+          <div className="loading-bar" />
+          <div className="loading-bar" />
+        </div>
+      ))}
+    </section>
   );
 }

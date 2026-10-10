@@ -29,24 +29,28 @@ export function ClientDetailTabs({
   const [state, setState] = useState<"loading" | "ready" | "error">("loading");
 
   useEffect(() => {
-    const controller = new AbortController();
+    let active = true;
     async function load() {
       try {
         const response = await fetch(`/api/clientes/${clientId}/analises`, {
-          signal: controller.signal,
           cache: "no-store",
         });
+        if (!active) return;
         if (!response.ok) throw new Error("Falha ao carregar análises.");
         const result = parseClientAnalyses(await response.json());
+        if (!active) return;
         if (!result) throw new Error("Formato de análise inválido.");
         setData(result);
         setState("ready");
       } catch {
-        if (!controller.signal.aborted) setState("error");
+        if (active) setState("error");
       }
     }
-    load();
-    return () => controller.abort();
+    const timer = window.setTimeout(load, 0);
+    return () => {
+      active = false;
+      window.clearTimeout(timer);
+    };
   }, [clientId]);
 
   let content: ReactNode;
@@ -63,15 +67,9 @@ export function ClientDetailTabs({
       </section>
     );
   } else if (activeTab === "fgc") {
-    content = <FgcExposurePanel analysis={data?.fgcAnalysis} isMock={data?.isMock} />;
+    content = <FgcExposurePanel analysis={data?.fgcAnalysis} />;
   } else if (activeTab === "credit") {
-    content = (
-      <CreditScorePanel
-        assessment={data?.creditAssessment}
-        isMock={data?.isMock}
-        clientName={clientName}
-      />
-    );
+    content = <CreditScorePanel assessment={data?.creditAssessment} clientName={clientName} />;
   } else {
     content = <MaturitiesAlertsPanel data={data} />;
   }
@@ -138,7 +136,7 @@ function MaturitiesAlertsPanel({ data }: { data: ClientAnalysesResponse | null }
             <span className="section-kicker">AGENDA</span>
             <h2 id="maturities-title">Vencimentos</h2>
           </div>
-          {data?.isMock && <span className="analysis-sample">Dados fictícios</span>}
+          <span className="analysis-sample">Dados fictícios</span>
         </div>
         <p className="analysis-origin">
           Prazos calculados em{" "}

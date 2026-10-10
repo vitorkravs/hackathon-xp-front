@@ -215,3 +215,5 @@ export const clientProfiles: Record<
     lastUpdate: "hoje, 11:06",
   },
 };
+
+export type ClientProfile = (typeof clientProfiles)[number];

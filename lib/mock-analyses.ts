@@ -392,7 +392,6 @@ export function getMockClientAnalyses(
   const client = getClientById(id);
   if (!client)
     return {
-      isMock: true,
       calculatedOn,
       fgcAnalysis: null,
       creditAssessment: null,
@@ -402,7 +401,6 @@ export function getMockClientAnalyses(
   const positions = getMockPositions(id);
   if (positions.reduce((sum, position) => sum + position.amount, 0) !== client.assets) {
     return {
-      isMock: true,
       calculatedOn,
       fgcAnalysis: {
         isComplete: false,
@@ -436,7 +434,6 @@ export function getMockClientAnalyses(
   const creditAssessment = calculateCredit(positions);
   const maturities = getMockMaturities(positions, calculatedOn);
   return {
-    isMock: true,
     calculatedOn,
     fgcAnalysis,
     creditAssessment,

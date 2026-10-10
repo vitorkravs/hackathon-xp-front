@@ -85,7 +85,6 @@ export type ClientAnalysesResponse = {
   creditAssessment: CreditAssessment | null;
   alerts?: RiskAlert[];
   maturities?: InvestmentMaturity[];
-  isMock: boolean;
   calculatedOn?: string;
 };
 
@@ -273,7 +272,6 @@ export function parseClientAnalyses(value: unknown): ClientAnalysesResponse | nu
     creditAssessment: (credit as CreditAssessment | null) ?? null,
     alerts: value.alerts as RiskAlert[] | undefined,
     maturities: value.maturities as InvestmentMaturity[] | undefined,
-    isMock: value.isMock === true,
     calculatedOn: typeof value.calculatedOn === "string" ? value.calculatedOn : undefined,
   };
 }

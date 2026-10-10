@@ -93,11 +93,14 @@ app/
     conexoes/
     oportunidades/
     components/                Componentes compartilhados
-  api/clientes/[id]/analises/  API local das análises
+  api/clientes/               API local da listagem
+    [id]/                     API local do cliente por ID
+      analises/               API local das análises
   globals.css                  Estilos e temas
 lib/
   mock-auth.ts                 Conta e sessão locais
   mock-data.ts                 Clientes e indicadores fictícios
+  mock-client-requests.ts      Consultas assíncronas simuladas
   mock-positions.ts            Posições fictícias por cliente
   mock-analyses.ts             Cálculos simulados de FGC, score e alertas
   analysis-contract.ts         Tipos e validação da resposta de análise
@@ -110,7 +113,9 @@ Os módulos da sidebar têm suas próprias `page.tsx`. O layout autenticado comp
 
 ## Dados, análises e integração
 
-A página do cliente chama `GET /api/clientes/{id}/analises`. Hoje, essa rota calcula uma resposta local a partir dos clientes e posições fictícios. Os painéis de FGC e crédito apenas exibem o resultado recebido: regras de elegibilidade, agrupamento por conglomerado e cálculo do score ficam na API local.
+A listagem consulta `GET /api/clientes`, com uma latência curta simulada e estados de carregamento e erro. Ao abrir `/clientes/[id]`, a página consulta `GET /api/clientes/{id}` e apresenta um esqueleto enquanto aguarda a resposta. A API de detalhe devolve cadastro, posições e indicadores básicos. Essas consultas usam os mesmos dados mockados e ainda não acessam um backend externo.
+
+A página do cliente também chama `GET /api/clientes/{id}/analises`. Hoje, essa rota calcula uma resposta local a partir dos clientes e posições fictícios. Os painéis de FGC e crédito apenas exibem o resultado recebido: regras de elegibilidade, agrupamento por conglomerado e cálculo do score ficam na API local.
 
 - **FGC:** agrupa posições potencialmente elegíveis por cliente e conglomerado e mostra exposição, parcela sob o limite ordinário e excesso potencial. Os valores dependem de confirmar titularidade, conglomerado, produto, saldo e histórico de garantias; excesso potencial **não é perda prevista**.
 - **Crédito privado:** apresenta uma nota fictícia para o **emissor**, composta por seis fatores com pesos e fontes visíveis. A nota não é rating oficial, não mede probabilidade de inadimplência e não substitui a avaliação da emissão, da concentração da carteira ou da adequação ao perfil do cliente.

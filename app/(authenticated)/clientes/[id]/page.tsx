@@ -1,5 +1,8 @@
+"use client";
+
+import { useEffect, useState } from "react";
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import {
   ArrowLeft,
   Cake,
@@ -9,32 +12,117 @@ import {
   TrendingUp,
   Wallet,
 } from "lucide-react";
-import { clientProfiles, getClientById, money } from "@/lib/mock-data";
+import { money, type Client, type ClientProfile } from "@/lib/mock-data";
+import type { InvestmentMaturity } from "@/lib/analysis-contract";
 import { birthdayLabel, formatBirthDate, getClientBirthday } from "@/lib/client-birthdays";
-import { getLargestIssuerExposure, getMockMaturities } from "@/lib/mock-analyses";
-import { todayInSaoPaulo } from "@/lib/local-date";
-import { getMockPositions, SIMULATION_AS_OF } from "@/lib/mock-positions";
+import type { MockPosition } from "@/lib/mock-positions";
 import { Avatar, Status } from "../../components/ClientVisuals";
 import { ClientDetailTabs } from "./ClientDetailTabs";
+import { ClientDetailSkeleton } from "./ClientDetailSkeleton";
 
-export const dynamic = "force-dynamic";
+type ClientDetailResponse = {
+  client: Client;
+  profile: ClientProfile;
+  positions: MockPosition[];
+  asOf: string;
+  calculatedOn: string;
+  largestIssuer: { issuerName: string; amount: number } | null;
+  nextMaturity: InvestmentMaturity | null;
+};
+
+function isClientDetailResponse(value: unknown): value is ClientDetailResponse {
+  if (!value || typeof value !== "object") return false;
+  const payload = value as Partial<ClientDetailResponse>;
+  return (
+    typeof payload.client?.id === "number" &&
+    typeof payload.client?.name === "string" &&
+    typeof payload.profile?.birthDate === "string" &&
+    typeof payload.asOf === "string" &&
+    typeof payload.calculatedOn === "string" &&
+    (payload.largestIssuer === null || typeof payload.largestIssuer?.amount === "number") &&
+    (payload.nextMaturity === null || typeof payload.nextMaturity?.daysUntil === "number") &&
+    Array.isArray(payload.positions)
+  );
+}
 
 const allocationLabels: Record<string, string> = {
   "Renda fixa": "Renda fixa",
   Fundos: "Fundos de investimento",
 };
 
-export default async function ClienteDetalhePage({ params }: { params: Promise<{ id: string }> }) {
-  const { id } = await params;
-  const client = getClientById(id);
-  if (!client) notFound();
+export default function ClienteDetalhePage() {
+  const { id } = useParams<{ id: string }>();
+  const router = useRouter();
+  const [detail, setDetail] = useState<ClientDetailResponse | null>(null);
+  const [status, setStatus] = useState<"loading" | "ready" | "error" | "not-found">("loading");
+  const [requestVersion, setRequestVersion] = useState(0);
 
-  const profile = clientProfiles[client.id];
-  const positions = getMockPositions(client.id);
-  const largestIssuer = getLargestIssuerExposure(positions);
-  const calculatedOn = todayInSaoPaulo();
+  useEffect(() => {
+    let active = true;
+    async function loadClient() {
+      try {
+        const response = await fetch(`/api/clientes/${encodeURIComponent(id)}`, {
+          cache: "no-store",
+        });
+        if (!active) return;
+        if (response.status === 401) {
+          router.replace("/");
+          return;
+        }
+        if (response.status === 404) {
+          setStatus("not-found");
+          return;
+        }
+        if (!response.ok) throw new Error("Falha na consulta do cliente.");
+        const payload: unknown = await response.json();
+        if (!active) return;
+        if (!isClientDetailResponse(payload)) throw new Error("Resposta do cliente inválida.");
+        setDetail(payload);
+        setStatus("ready");
+      } catch {
+        if (active) setStatus("error");
+      }
+    }
+    const timer = window.setTimeout(loadClient, 0);
+    return () => {
+      active = false;
+      window.clearTimeout(timer);
+    };
+  }, [id, requestVersion, router]);
+
+  if (status === "loading") return <ClientDetailSkeleton />;
+  if (status === "not-found") {
+    return (
+      <div className="content client-load-error">
+        <h1>Cliente não encontrado</h1>
+        <Link href="/clientes" prefetch={false}>
+          Voltar para clientes
+        </Link>
+      </div>
+    );
+  }
+  if (status === "error" || !detail) {
+    return (
+      <div className="content">
+        <section className="panel client-load-error" role="alert">
+          <strong>Não foi possível carregar o cliente.</strong>
+          <p>Tente consultar este perfil novamente.</p>
+          <button
+            className="secondary-button"
+            onClick={() => {
+              setStatus("loading");
+              setRequestVersion((version) => version + 1);
+            }}
+          >
+            Tentar novamente
+          </button>
+        </section>
+      </div>
+    );
+  }
+
+  const { client, profile, positions, asOf, calculatedOn, largestIssuer, nextMaturity } = detail;
   const birthday = getClientBirthday(client, calculatedOn);
-  const nextMaturity = getMockMaturities(positions, calculatedOn)[0];
   const fixedIncomeShare =
     client.allocation.find((item) => item.label === "Renda fixa")?.value ?? 0;
   const fixedIncomeAmount = Math.round((client.assets * fixedIncomeShare) / 100);
@@ -51,7 +139,7 @@ export default async function ClienteDetalhePage({ params }: { params: Promise<{
 
   return (
     <div className="content client-detail-content">
-      <Link href="/clientes" className="detail-back">
+      <Link href="/clientes" prefetch={false} className="detail-back">
         <ArrowLeft size={17} /> Voltar para clientes
       </Link>
       <div className="page-heading detail-heading">
@@ -83,7 +171,7 @@ export default async function ClienteDetalhePage({ params }: { params: Promise<{
       <p className="detail-data-notice">
         Todos os clientes, saldos, posições, conexões e análises desta tela são fictícios. Nenhum
         dado foi recebido da Pluggy ou de uma conexão real Open Finance. Data-base da carteira:{" "}
-        {SIMULATION_AS_OF.split("-").reverse().join("/")}.
+        {asOf.split("-").reverse().join("/")}.
       </p>
 
       <section className="panel detail-profile-card" aria-label="Resumo do cliente">
@@ -97,7 +185,7 @@ export default async function ClienteDetalhePage({ params }: { params: Promise<{
             <div className="detail-connection">
               <span>Consentimento simulado:</span>
               <Status status={client.consent} />
-              <span>Data-base simulada: {SIMULATION_AS_OF.split("-").reverse().join("/")}</span>
+              <span>Data-base simulada: {asOf.split("-").reverse().join("/")}</span>
             </div>
           </div>
         </div>

@@ -36,12 +36,9 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
     const analysis = parseClientAnalyses(await response.json());
     if (!analysis) throw new Error("Resposta de análise inválida.");
 
-    return NextResponse.json(
-      { ...analysis, isMock: false },
-      {
-        headers: { "Cache-Control": "no-store" },
-      },
-    );
+    return NextResponse.json(analysis, {
+      headers: { "Cache-Control": "no-store" },
+    });
   } catch (error) {
     console.error("Falha ao carregar análises do cliente:", error);
     return NextResponse.json(
