@@ -6,6 +6,7 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
+    "test": "tsx --test tests/*.test.ts",
     "lint": "eslint",
     "format": "prettier --write \"app/**/*.{ts,tsx,css}\" \"lib/**/*.ts\" proxy.ts next.config.ts",
     "format:check": "prettier --check \"app/**/*.{ts,tsx,css}\" \"lib/**/*.ts\" proxy.ts next.config.ts"
@@ -24,6 +25,7 @@
     "eslint": "^9.39.1",
     "eslint-config-next": "16.4.0",
     "prettier": "^3.9.10",
+    "tsx": "^4.23.15",
     "typescript": "^5"
   }
 }

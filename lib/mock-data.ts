@@ -157,9 +157,6 @@ export const clientProfiles: Record<
     address: string;
     since: string;
     lastUpdate: string;
-    fgcShare: number;
-    issuerShare: number;
-    maturityDays: number;
   }
 > = {
   1: {
@@ -170,9 +167,6 @@ export const clientProfiles: Record<
     address: "São Paulo, SP",
     since: "mar/2025",
     lastUpdate: "hoje, 09:42",
-    fgcShare: 0.42,
-    issuerShare: 0.292,
-    maturityDays: 25,
   },
   2: {
     document: "***.***.***-18",
@@ -182,9 +176,6 @@ export const clientProfiles: Record<
     address: "Campinas, SP",
     since: "jan/2024",
     lastUpdate: "hoje, 10:15",
-    fgcShare: 0.19,
-    issuerShare: 0.24,
-    maturityDays: 86,
   },
   3: {
     document: "***.***.***-73",
@@ -194,9 +185,6 @@ export const clientProfiles: Record<
     address: "Curitiba, PR",
     since: "jun/2024",
     lastUpdate: "ontem, 16:32",
-    fgcShare: 0.58,
-    issuerShare: 0.33,
-    maturityDays: 18,
   },
   4: {
     document: "***.***.***-56",
@@ -206,9 +194,6 @@ export const clientProfiles: Record<
     address: "Belo Horizonte, MG",
     since: "fev/2025",
     lastUpdate: "hoje, 08:40",
-    fgcShare: 0.36,
-    issuerShare: 0.27,
-    maturityDays: 42,
   },
   5: {
     document: "***.***.***-09",
@@ -218,9 +203,6 @@ export const clientProfiles: Record<
     address: "Rio de Janeiro, RJ",
     since: "ago/2025",
     lastUpdate: "aguardando autorização",
-    fgcShare: 0.16,
-    issuerShare: 0.23,
-    maturityDays: 94,
   },
   6: {
     document: "***.***.***-31",
@@ -230,8 +212,5 @@ export const clientProfiles: Record<
     address: "Porto Alegre, RS",
     since: "mai/2025",
     lastUpdate: "hoje, 11:06",
-    fgcShare: 0.34,
-    issuerShare: 0.28,
-    maturityDays: 29,
   },
 };
