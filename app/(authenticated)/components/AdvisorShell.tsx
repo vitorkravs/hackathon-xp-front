@@ -16,8 +16,8 @@ import {
   Menu,
   Moon,
   Settings2,
-  Sparkles,
   Sun,
+  Target,
   Users,
   X,
 } from "lucide-react";
@@ -50,7 +50,7 @@ const navigation = [
   { href: "/dashboard", label: "Visão geral", icon: LayoutDashboard },
   { href: "/clientes", label: "Clientes", icon: Users },
   { href: "/conexoes", label: "Conexões", icon: Link2 },
-  { href: "/oportunidades", label: "Oportunidades", icon: Sparkles, count: 12 },
+  { href: "/oportunidades", label: "Oportunidades", icon: Target, count: 12 },
 ];
 
 export function AdvisorShell({ children }: { children: React.ReactNode }) {

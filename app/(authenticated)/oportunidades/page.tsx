@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { ArrowUpRight, Sparkles } from "lucide-react";
+import { ArrowUpRight, ChartNoAxesCombined, Target } from "lucide-react";
 import { clients, compactMoney, type Client } from "@/lib/mock-data";
 import { Avatar } from "../components/ClientVisuals";
 
@@ -20,11 +20,11 @@ export default function OportunidadesPage() {
             <p>Sinais para apoiar conversas relevantes com cada cliente.</p>
           </div>
           <span className="insight-counter">
-            <Sparkles size={17} /> 12 insights identificados
+            <Target size={17} /> 12 insights identificados
           </span>
         </div>
         <div className="insight-intro">
-          <Sparkles size={24} />
+          <ChartNoAxesCombined size={24} />
           <div>
             <strong>Transforme dados em conversas melhores</strong>
             <p>Valide o contexto, o perfil e a adequação antes de recomendar qualquer ação.</p>

@@ -341,12 +341,6 @@ tr:focus-visible {
   font-size: 13px;
   margin: 0;
 }
-.wave {
-  color: #e8ba25;
-  font-size: 25px;
-  vertical-align: 3px;
-  margin-left: 3px;
-}
 .primary-button {
   background: #171717;
   border: 1px solid #171717;

@@ -10,7 +10,7 @@ import {
   Link2,
   Plus,
   SlidersHorizontal,
-  Sparkles,
+  Target,
   TrendingUp,
   Users,
   Wallet,
@@ -36,9 +36,7 @@ export default function DashboardPage() {
             <div className="eyebrow">
               <span className="eyebrow-line" /> INTELIGÊNCIA PARA ASSESSORIA
             </div>
-            <h1>
-              Bom dia, Ana <span className="wave">✳</span>
-            </h1>
+            <h1>Bom dia, Ana</h1>
             <p>Uma visão completa dos seus clientes para decisões mais estratégicas.</p>
           </div>
           <button
@@ -73,7 +71,7 @@ export default function DashboardPage() {
             progress={67}
           />
           <Metric
-            icon={Sparkles}
+            icon={Target}
             label="Oportunidades"
             value="12"
             detail="Insights para acompanhar"
