@@ -21,9 +21,11 @@ function scoreBand(score: number) {
 export function CreditScorePanel({
   assessment,
   isMock,
+  clientName,
 }: {
   assessment: CreditAssessment | null | undefined;
   isMock?: boolean;
+  clientName: string;
 }) {
   const score = assessment?.totalScore;
 
@@ -84,8 +86,27 @@ export function CreditScorePanel({
           </div>
           <p className="analysis-note">
             <CircleAlert size={16} />
-            Score interno. Não é rating oficial nem probabilidade de inadimplência.
+            Score fictício do emissor {assessment?.issuerName}; não é nota de {clientName}, rating
+            oficial nem probabilidade de inadimplência.
           </p>
+          <div className="credit-risk-context">
+            <div>
+              <strong>Capacidade de pagamento do emissor</strong>
+              <p>{assessment?.rationale}</p>
+            </div>
+            <div>
+              <strong>Estrutura da emissão</strong>
+              <p>{assessment?.investmentRiskMessage}</p>
+            </div>
+            <div>
+              <strong>Concentração da carteira</strong>
+              <p>{assessment?.portfolioContextMessage}</p>
+            </div>
+            <div>
+              <strong>Adequação ao perfil</strong>
+              <p>{assessment?.suitabilityMessage}</p>
+            </div>
+          </div>
           <div className="credit-factors">
             <h3>Fatores da nota</h3>
             {factorLabels.map(({ key, label }) => {
@@ -106,6 +127,7 @@ export function CreditScorePanel({
                   {assessment?.factorReasons?.[key]?.map((reason, index) => (
                     <p key={`${key}-${index}`}>{reason}</p>
                   ))}
+                  <small>Fonte: {assessment?.factorSources?.[key] ?? "Não informada"}</small>
                 </div>
               );
             })}

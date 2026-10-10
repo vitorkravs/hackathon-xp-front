@@ -2957,3 +2957,79 @@ tbody tr:hover {
     text-align: left;
   }
 }
+.detail-data-notice {
+  border: 1px solid var(--border);
+  border-left: 3px solid #d9b637;
+  border-radius: 8px;
+  padding: 12px 14px;
+  color: var(--text-soft);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.analysis-positions ul,
+.analysis-missing ul {
+  margin: 8px 0 0;
+  padding-left: 18px;
+}
+
+.analysis-positions li {
+  margin: 5px 0;
+}
+
+.credit-risk-context,
+.maturity-windows {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  margin: 16px 0;
+}
+
+.credit-risk-context > div,
+.maturity-windows > div {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 12px;
+}
+
+.credit-risk-context strong,
+.maturity-windows strong {
+  font-size: 12px;
+}
+.credit-risk-context p {
+  margin: 7px 0 0;
+  color: var(--text-soft);
+  font-size: 11px;
+  line-height: 1.5;
+}
+.credit-factor small {
+  display: block;
+  margin-top: 6px;
+  color: var(--text-soft);
+}
+.maturity-windows {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+.maturity-windows > div {
+  display: grid;
+  gap: 4px;
+}
+.maturity-windows strong {
+  font-size: 18px;
+}
+.maturity-windows span {
+  color: var(--text-soft);
+  font-size: 10px;
+}
+.maturity-badge {
+  width: fit-content;
+  color: #8c6800;
+  font-size: 10px;
+  font-weight: 700;
+}
+
+@media (max-width: 640px) {
+  .credit-risk-context {
+    grid-template-columns: 1fr;
+  }
+}

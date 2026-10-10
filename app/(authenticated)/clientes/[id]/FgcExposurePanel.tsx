@@ -34,6 +34,12 @@ export function FgcExposurePanel({
             <p className="analysis-muted">{analysis.dataQualityMessage}</p>
           )}
           <WarningList warnings={analysis.warnings} />
+          {analysis.pendingChecks?.length ? (
+            <div className="analysis-missing">
+              <strong>Validações pendentes</strong>
+              <WarningList warnings={analysis.pendingChecks} />
+            </div>
+          ) : null}
           {analysis.excludedProducts?.length ? (
             <p className="analysis-muted">
               Fora da garantia ordinária nesta simulação: {analysis.excludedProducts.join(", ")}.
@@ -44,19 +50,20 @@ export function FgcExposurePanel({
       ) : (
         <>
           <p className="analysis-muted">
-            Estimativa por instituição ou conglomerado, conforme os resultados recebidos da API.
+            Classificação e agrupamento calculados pela API local com posições fictícias. A
+            elegibilidade e os limites ainda exigem validação documental.
           </p>
           <div className="analysis-summary">
             <div>
-              <span>Exposição elegível</span>
+              <span>Exposição potencialmente elegível</span>
               <strong>{formatCurrency(analysis.summary?.eligibleExposure)}</strong>
             </div>
             <div>
-              <span>Dentro do limite ordinário</span>
+              <span>Dentro do limite ordinário estimado</span>
               <strong>{formatCurrency(analysis.summary?.estimatedCoverage)}</strong>
             </div>
             <div className="analysis-excess">
-              <span>Excesso sobre o limite</span>
+              <span>Excesso potencial sobre o limite</span>
               <strong>{formatCurrency(analysis.summary?.estimatedExcess)}</strong>
             </div>
           </div>
@@ -70,17 +77,30 @@ export function FgcExposurePanel({
                 {group.institutions?.length ? (
                   <p>Instituições: {group.institutions.join(", ")}</p>
                 ) : null}
+                {group.positions?.length ? (
+                  <div className="analysis-positions">
+                    <strong>Posições potencialmente elegíveis</strong>
+                    <ul>
+                      {group.positions.map((position) => (
+                        <li key={position.positionId}>
+                          {position.name} ({position.productType}) ·{" "}
+                          {formatCurrency(position.eligibleBalance)}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                ) : null}
                 <dl>
                   <div>
-                    <dt>Exposição elegível estimada</dt>
+                    <dt>Exposição potencialmente elegível</dt>
                     <dd>{formatCurrency(group.eligibleExposure)}</dd>
                   </div>
                   <div>
-                    <dt>Cobertura ordinária estimada</dt>
+                    <dt>Parcela sob o limite ordinário (estimativa)</dt>
                     <dd>{formatCurrency(group.estimatedCoverage)}</dd>
                   </div>
                   <div>
-                    <dt>Excesso sobre o limite</dt>
+                    <dt>Excesso potencial sobre o limite</dt>
                     <dd>{formatCurrency(group.estimatedExcess)}</dd>
                   </div>
                 </dl>
@@ -95,6 +115,12 @@ export function FgcExposurePanel({
             </div>
           )}
           <WarningList warnings={analysis.warnings} />
+          {analysis.pendingChecks?.length ? (
+            <div className="analysis-missing">
+              <strong>Validações pendentes</strong>
+              <WarningList warnings={analysis.pendingChecks} />
+            </div>
+          ) : null}
           {analysis.excludedProducts?.length ? (
             <p className="analysis-muted">
               Produtos fora da garantia ordinária: {analysis.excludedProducts.join(", ")}.

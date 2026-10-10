@@ -1,15 +1,13 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft, CalendarClock, Landmark, ShieldCheck, TrendingUp, Wallet } from "lucide-react";
-import { clientProfiles, clients, getClientById, money } from "@/lib/mock-data";
-import { getLargestIssuerExposure, getMockMaturities } from "@/lib/mock-analyses";
-import { getMockPositions } from "@/lib/mock-positions";
+import { clientProfiles, getClientById, money } from "@/lib/mock-data";
+import { getLargestIssuerExposure, getMockMaturities, todayInSaoPaulo } from "@/lib/mock-analyses";
+import { getMockPositions, SIMULATION_AS_OF } from "@/lib/mock-positions";
 import { Avatar, Status } from "../../components/ClientVisuals";
 import { ClientDetailTabs } from "./ClientDetailTabs";
 
-export function generateStaticParams() {
-  return clients.map((client) => ({ id: String(client.id) }));
-}
+export const dynamic = "force-dynamic";
 
 const allocationLabels: Record<string, string> = {
   "Renda fixa": "Renda fixa",
@@ -24,7 +22,8 @@ export default async function ClienteDetalhePage({ params }: { params: Promise<{
   const profile = clientProfiles[client.id];
   const positions = getMockPositions(client.id);
   const largestIssuer = getLargestIssuerExposure(positions);
-  const nextMaturity = getMockMaturities(positions)[0];
+  const calculatedOn = todayInSaoPaulo();
+  const nextMaturity = getMockMaturities(positions, calculatedOn)[0];
   const fixedIncomeShare =
     client.allocation.find((item) => item.label === "Renda fixa")?.value ?? 0;
   const fixedIncomeAmount = Math.round((client.assets * fixedIncomeShare) / 100);
@@ -55,6 +54,12 @@ export default async function ClienteDetalhePage({ params }: { params: Promise<{
         </div>
       </div>
 
+      <p className="detail-data-notice">
+        Todos os clientes, saldos, posições, conexões e análises desta tela são fictícios. Nenhum
+        dado foi recebido da Pluggy ou de uma conexão real Open Finance. Data-base da carteira:{" "}
+        {SIMULATION_AS_OF.split("-").reverse().join("/")}.
+      </p>
+
       <section className="panel detail-profile-card" aria-label="Resumo do cliente">
         <div className="detail-profile-main">
           <Avatar client={client} large />
@@ -64,8 +69,9 @@ export default async function ClienteDetalhePage({ params }: { params: Promise<{
               CPF: {profile.document} · Cliente desde {profile.since}
             </p>
             <div className="detail-connection">
+              <span>Consentimento simulado:</span>
               <Status status={client.consent} />
-              <span>Última atualização: {profile.lastUpdate}</span>
+              <span>Data-base simulada: {SIMULATION_AS_OF.split("-").reverse().join("/")}</span>
             </div>
           </div>
         </div>
@@ -81,14 +87,14 @@ export default async function ClienteDetalhePage({ params }: { params: Promise<{
             <Wallet size={19} /> Patrimônio investido
           </span>
           <strong>{money(client.assets)}</strong>
-          <small>Saldo acompanhado</small>
+          <small>Saldo fictício acompanhado</small>
         </div>
         <div className="panel detail-metric">
           <span>
-            <Landmark size={19} /> Instituições
+            <Landmark size={19} /> Instituições simuladas
           </span>
           <strong>{client.institutions}</strong>
-          <small>Conexões financeiras</small>
+          <small>Conexões financeiras fictícias</small>
         </div>
         <div className="panel detail-metric">
           <span>
@@ -113,12 +119,16 @@ export default async function ClienteDetalhePage({ params }: { params: Promise<{
             <CalendarClock size={19} /> Próximo vencimento
           </span>
           <strong>{nextMaturity ? `${nextMaturity.daysUntil} dias` : "Não disponível"}</strong>
-          <small>{nextMaturity?.productName ?? "Sem data informada"}</small>
+          <small>
+            {nextMaturity?.productName ?? "Sem data informada"} · calculado em{" "}
+            {calculatedOn.split("-").reverse().join("/")}
+          </small>
         </div>
       </div>
 
       <ClientDetailTabs
         clientId={client.id}
+        clientName={client.name}
         overview={
           <>
             <div className="detail-columns">
@@ -164,11 +174,11 @@ export default async function ClienteDetalhePage({ params }: { params: Promise<{
                   <strong>{money(client.assets)}</strong>
                 </div>
                 <div className="detail-investment-stat">
-                  <span>Instituições conectadas</span>
+                  <span>Instituições simuladas</span>
                   <strong>{client.institutions}</strong>
                 </div>
                 <div className="detail-investment-stat">
-                  <span>Consentimento</span>
+                  <span>Consentimento simulado</span>
                   <Status status={client.consent} />
                 </div>
                 <div className="detail-investment-foot">

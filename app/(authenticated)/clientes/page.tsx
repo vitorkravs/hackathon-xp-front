@@ -44,7 +44,7 @@ export default function ClientesPage() {
     const url = URL.createObjectURL(new Blob([csv], { type: "text/csv;charset=utf-8;" }));
     const anchor = document.createElement("a");
     anchor.href = url;
-    anchor.download = "xp-open-finance-clientes.csv";
+    anchor.download = "xp-clientes-ficticios.csv";
     anchor.click();
     URL.revokeObjectURL(url);
   };
@@ -59,6 +59,9 @@ export default function ClientesPage() {
             </div>
             <h1>Seus clientes</h1>
             <p>Consulte perfis e patrimônio em uma única visão.</p>
+            <p className="analysis-origin">
+              Clientes, valores e conexões fictícios; sem dados reais da Pluggy ou Open Finance.
+            </p>
           </div>
           <button
             className="primary-button"

@@ -16,6 +16,18 @@ const eligibleProducts = new Set(["CDB", "LCI", "LCA"]);
 const currency = (value: number) =>
   new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(value);
 
+// Usa o calendário de São Paulo; a data da carteira continua sendo a data-base da simulação.
+export function todayInSaoPaulo(): string {
+  const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone: "America/Sao_Paulo",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).formatToParts(new Date());
+  const value = (type: string) => parts.find((part) => part.type === type)?.value ?? "";
+  return `${value("year")}-${value("month")}-${value("day")}`;
+}
+
 export const creditWeights: Record<CreditFactorKey, number> = {
   paymentCapacityScore: 0.25,
   leverageScore: 0.2,
@@ -108,8 +120,11 @@ export function getLargestIssuerExposure(positions: MockPosition[]) {
   return [...totals.values()].sort((a, b) => b.amount - a.amount)[0] ?? null;
 }
 
-export function getMockMaturities(positions: MockPosition[]): InvestmentMaturity[] {
-  const asOf = Date.parse(`${SIMULATION_AS_OF}T00:00:00Z`);
+export function getMockMaturities(
+  positions: MockPosition[],
+  calculatedOn = todayInSaoPaulo(),
+): InvestmentMaturity[] {
+  const asOf = Date.parse(`${calculatedOn}T00:00:00Z`);
   return positions
     .filter((position) => position.maturityDate)
     .map((position) => ({
@@ -142,6 +157,12 @@ function calculateFgc(client: Client, positions: MockPosition[]): FgcAnalysis {
     sources: [SOURCE],
     globalLimitMessage:
       "Histórico de garantias pagas não disponível; o limite global não foi verificado.",
+    pendingChecks: [
+      "Confirmar titularidade de cada posição e eventuais cotitulares.",
+      "Validar instituição emissora e vínculo com o conglomerado financeiro.",
+      "Confirmar elegibilidade de cada produto e saldo coberto, inclusive juros.",
+      "Consultar histórico de garantias pagas e limite global aplicável.",
+    ],
   };
   if (client.consent === "Pendente" || missing.length) {
     return {
@@ -158,15 +179,30 @@ function calculateFgc(client: Client, positions: MockPosition[]): FgcAnalysis {
   }
 
   // O agrupamento e a elegibilidade ficam nesta resposta da API local, nunca no painel React.
-  const grouped = new Map<string, { name: string; institutions: Set<string>; exposure: number }>();
+  const grouped = new Map<
+    string,
+    {
+      name: string;
+      institutions: Set<string>;
+      exposure: number;
+      positions: FgcGroup["positions"];
+    }
+  >();
   for (const position of eligible) {
     const key = `${client.id}:${position.conglomerateId}`;
     const group = grouped.get(key) ?? {
       name: position.conglomerateName!,
       institutions: new Set<string>(),
       exposure: 0,
+      positions: [],
     };
     group.exposure += position.eligibleBalance!;
+    group.positions?.push({
+      positionId: position.id,
+      name: position.name,
+      productType: position.productType,
+      eligibleBalance: position.eligibleBalance!,
+    });
     if (position.institutionName) group.institutions.add(position.institutionName);
     grouped.set(key, group);
   }
@@ -174,6 +210,7 @@ function calculateFgc(client: Client, positions: MockPosition[]): FgcAnalysis {
     conglomerateId: key,
     conglomerateName: group.name,
     institutions: [...group.institutions],
+    positions: group.positions,
     eligibleExposure: group.exposure,
     estimatedCoverage: Math.min(group.exposure, ORDINARY_LIMIT),
     estimatedExcess: Math.max(group.exposure - ORDINARY_LIMIT, 0),
@@ -192,7 +229,7 @@ function calculateFgc(client: Client, positions: MockPosition[]): FgcAnalysis {
     },
     groups,
     warnings: [
-      "Estimativa ilustrativa: titularidade, juros e critérios completos não foram verificados.",
+      "Exposição potencialmente elegível; a cobertura depende das validações pendentes e não é promessa de pagamento.",
     ],
   };
 }
@@ -216,8 +253,11 @@ function calculateCredit(positions: MockPosition[]): CreditAssessment {
   const factorReasons = Object.fromEntries(
     factorKeys.map((key) => {
       const value = issuer.factors[key]!;
-      const reading = value >= 80 ? "favorável" : value >= 60 ? "merece atenção" : "é frágil";
-      return [key, [`Na simulação, este indicador ${reading} (${value}/100). ${reasons[key]}`]];
+      const reading = value >= 80 ? "é favorável" : value >= 60 ? "merece atenção" : "é frágil";
+      return [
+        key,
+        [`Na simulação, o resultado deste indicador ${reading} (${value}/100). ${reasons[key]}`],
+      ];
     }),
   ) as Record<CreditFactorKey, string[]>;
   return {
@@ -226,8 +266,19 @@ function calculateCredit(positions: MockPosition[]): CreditAssessment {
     ...issuer.factors,
     factorReasons,
     factorWeights: creditWeights,
+    factorSources: Object.fromEntries(
+      factorKeys.map((key) => [
+        key,
+        "Valor manual fictício; sem demonstração financeira, agência de rating ou documento da emissão.",
+      ]),
+    ) as Record<CreditFactorKey, string>,
     rationale: issuer.rationale,
     linkedInvestmentNames: [privatePosition.name],
+    investmentRiskMessage:
+      "A estrutura da debênture, prioridade de pagamento, garantias, prazo e liquidez não foram validados por documentos da emissão.",
+    portfolioContextMessage: `A posição ${privatePosition.name} representa ${((privatePosition.amount / positions.reduce((sum, position) => sum + position.amount, 0)) * 100).toFixed(1).replace(".", ",")}% da carteira fictícia. A concentração por emissor é monitorada separadamente nos alertas.`,
+    suitabilityMessage:
+      "A adequação ao perfil do cliente exige análise independente de objetivos, horizonte, liquidez e tolerância a risco; o score do emissor não a determina.",
     methodologyVersion: "sim-v1",
     asOf: SIMULATION_AS_OF,
     sources: ["Fatores manuais fictícios da simulação"],
@@ -244,6 +295,8 @@ function alert(
   severity: RiskAlert["severity"],
   relatedTo: string,
   action: string,
+  trigger: string,
+  asOf = SIMULATION_AS_OF,
 ): RiskAlert {
   return {
     id,
@@ -252,8 +305,9 @@ function alert(
     severity,
     relatedTo,
     action,
+    trigger,
     status: "Aberto",
-    asOf: SIMULATION_AS_OF,
+    asOf,
     source: SOURCE,
   };
 }
@@ -265,6 +319,7 @@ function calculateAlerts(
   credit: CreditAssessment,
   maturities: InvestmentMaturity[],
   threshold: number,
+  calculatedOn: string,
 ): RiskAlert[] {
   const alerts: RiskAlert[] = [];
   const largest = getLargestIssuerExposure(positions);
@@ -277,19 +332,22 @@ function calculateAlerts(
         `${largest.issuerName} representa ${share.toFixed(1).replace(".", ",")}% do patrimônio monitorado (${currency(largest.amount)}).`,
         share >= 25 ? "Alta" : "Média",
         largest.issuerName,
-        "Revisar concentração e confirmar se há posições não sincronizadas.",
+        "Conferir a posição fictícia e avaliar a diversificação por emissor.",
+        `Participação de ${share.toFixed(1).replace(".", ",")}% ≥ limite configurado de ${(threshold * 100).toFixed(0)}%.`,
       ),
     );
   }
   if (fgc.isComplete && (fgc.summary?.estimatedExcess ?? 0) > 0) {
+    const affectedGroups = fgc.groups?.filter((group) => (group.estimatedExcess ?? 0) > 0) ?? [];
     alerts.push(
       alert(
         `fgc-${client.id}`,
         "Excesso potencial sobre o limite ordinário",
-        `A simulação aponta ${currency(fgc.summary!.estimatedExcess!)} acima do limite ordinário.`,
+        `${affectedGroups.map((group) => `${group.conglomerateName}: ${currency(group.eligibleExposure!)} de exposição potencialmente elegível e ${currency(group.estimatedExcess!)} de excesso potencial`).join("; ")}. Não é perda prevista nem cobertura confirmada.`,
         "Alta",
         "Proteção FGC",
-        "Confirmar titularidade, saldos, conglomerados e histórico de garantias.",
+        "Conferir documentos de titularidade, emissor/conglomerado, elegibilidade, saldo e histórico de garantias antes de estimar cobertura.",
+        `Exposição potencial por conglomerado supera o limite ordinário simulado de ${currency(ORDINARY_LIMIT)}.`,
       ),
     );
   }
@@ -302,6 +360,7 @@ function calculateAlerts(
         credit.totalScore < 40 ? "Alta" : "Média",
         credit.issuerName ?? "Emissor",
         "Examinar fatores, fontes e estrutura do investimento.",
+        `Score fictício do emissor abaixo de 80/100; não mede o risco da carteira do cliente.`,
       ),
     );
   }
@@ -314,6 +373,8 @@ function calculateAlerts(
         "Média",
         maturity.productName,
         "Confirmar data, liquidez e objetivos do cliente.",
+        `Vencimento em até 30 dias, calculado em ${calculatedOn}.`,
+        calculatedOn,
       ),
     );
   }
@@ -325,7 +386,8 @@ function calculateAlerts(
         "Consentimento não ativo; a carteira monitorada pode estar incompleta.",
         "Média",
         client.name,
-        "Solicitar autorização e atualizar posições.",
+        "Rever o consentimento simulado e completar as posições fictícias.",
+        "Consentimento da simulação está pendente.",
       ),
     );
   }
@@ -336,14 +398,23 @@ function calculateAlerts(
 export function getMockClientAnalyses(
   id: number,
   concentrationThreshold = 0.15,
+  calculatedOn = todayInSaoPaulo(),
 ): ClientAnalysesResponse {
   const client = getClientById(id);
   if (!client)
-    return { isMock: true, fgcAnalysis: null, creditAssessment: null, alerts: [], maturities: [] };
+    return {
+      isMock: true,
+      calculatedOn,
+      fgcAnalysis: null,
+      creditAssessment: null,
+      alerts: [],
+      maturities: [],
+    };
   const positions = getMockPositions(id);
   if (positions.reduce((sum, position) => sum + position.amount, 0) !== client.assets) {
     return {
       isMock: true,
+      calculatedOn,
       fgcAnalysis: {
         isComplete: false,
         dataQualityMessage: "As posições fictícias não somam o patrimônio informado.",
@@ -364,6 +435,7 @@ export function getMockClientAnalyses(
           "Alta",
           client.name,
           "Corrigir as posições fictícias.",
+          "Soma das posições difere do patrimônio informado.",
         ),
       ],
       maturities: [],
@@ -373,9 +445,10 @@ export function getMockClientAnalyses(
     concentrationThreshold > 0 && concentrationThreshold <= 1 ? concentrationThreshold : 0.15;
   const fgcAnalysis = calculateFgc(client, positions);
   const creditAssessment = calculateCredit(positions);
-  const maturities = getMockMaturities(positions);
+  const maturities = getMockMaturities(positions, calculatedOn);
   return {
     isMock: true,
+    calculatedOn,
     fgcAnalysis,
     creditAssessment,
     maturities,
@@ -386,6 +459,7 @@ export function getMockClientAnalyses(
       creditAssessment,
       maturities,
       threshold,
+      calculatedOn,
     ),
   };
 }

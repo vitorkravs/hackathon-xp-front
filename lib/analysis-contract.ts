@@ -6,6 +6,7 @@ export type FgcGroup = {
   estimatedCoverage: number | null;
   estimatedExcess: number | null;
   warnings?: string[];
+  positions?: { positionId: string; name: string; productType: string; eligibleBalance: number }[];
 };
 
 export type FgcAnalysis = {
@@ -20,6 +21,7 @@ export type FgcAnalysis = {
   warnings?: string[];
   dataQualityMessage?: string;
   globalLimitMessage?: string;
+  pendingChecks?: string[];
   asOf?: string;
   sources?: string[];
 };
@@ -43,6 +45,10 @@ export type CreditAssessment = {
   guaranteesScore?: number | null;
   factorReasons?: Partial<Record<CreditFactorKey, string[]>>;
   factorWeights?: Partial<Record<CreditFactorKey, number>>;
+  factorSources?: Partial<Record<CreditFactorKey, string>>;
+  investmentRiskMessage?: string;
+  portfolioContextMessage?: string;
+  suitabilityMessage?: string;
   rationale?: string;
   warnings?: string[];
   missingFactors?: string[];
@@ -63,6 +69,7 @@ export type RiskAlert = {
   relatedTo: string;
   status: "Aberto";
   action: string;
+  trigger?: string;
 };
 
 export type InvestmentMaturity = {
@@ -79,6 +86,7 @@ export type ClientAnalysesResponse = {
   alerts?: RiskAlert[];
   maturities?: InvestmentMaturity[];
   isMock: boolean;
+  calculatedOn?: string;
 };
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
@@ -121,7 +129,8 @@ export function parseClientAnalyses(value: unknown): ClientAnalysesResponse | nu
       !isOptionalString(fgc.asOf) ||
       !isOptionalStringArray(fgc.sources) ||
       !isOptionalStringArray(fgc.warnings) ||
-      !isOptionalStringArray(fgc.excludedProducts)
+      !isOptionalStringArray(fgc.excludedProducts) ||
+      !isOptionalStringArray(fgc.pendingChecks)
     ) {
       return null;
     }
@@ -144,6 +153,16 @@ export function parseClientAnalyses(value: unknown): ClientAnalysesResponse | nu
             typeof group.conglomerateName === "string" &&
             isOptionalStringArray(group.institutions) &&
             isOptionalStringArray(group.warnings) &&
+            (group.positions === undefined ||
+              (Array.isArray(group.positions) &&
+                group.positions.every(
+                  (position) =>
+                    isRecord(position) &&
+                    typeof position.positionId === "string" &&
+                    typeof position.name === "string" &&
+                    typeof position.productType === "string" &&
+                    isAmount(position.eligibleBalance),
+                ))) &&
             isAmount(group.eligibleExposure) &&
             isAmount(group.estimatedCoverage) &&
             isAmount(group.estimatedExcess),
@@ -162,6 +181,9 @@ export function parseClientAnalyses(value: unknown): ClientAnalysesResponse | nu
       !isOptionalString(credit.dataQualityMessage) ||
       !isOptionalString(credit.asOf) ||
       !isOptionalString(credit.methodologyVersion) ||
+      !isOptionalString(credit.investmentRiskMessage) ||
+      !isOptionalString(credit.portfolioContextMessage) ||
+      !isOptionalString(credit.suitabilityMessage) ||
       !isOptionalStringArray(credit.sources) ||
       !isOptionalStringArray(credit.warnings) ||
       !isOptionalStringArray(credit.missingFactors) ||
@@ -190,6 +212,13 @@ export function parseClientAnalyses(value: unknown): ClientAnalysesResponse | nu
       return null;
     }
     const weights = credit.factorWeights;
+    const factorSources = credit.factorSources;
+    if (
+      factorSources !== undefined &&
+      (!isRecord(factorSources) ||
+        !creditFactorKeys.every((key) => isOptionalString(factorSources[key])))
+    )
+      return null;
     if (
       weights !== undefined &&
       (!isRecord(weights) ||
@@ -220,7 +249,8 @@ export function parseClientAnalyses(value: unknown): ClientAnalysesResponse | nu
             typeof alert.source === "string" &&
             typeof alert.relatedTo === "string" &&
             alert.status === "Aberto" &&
-            typeof alert.action === "string",
+            typeof alert.action === "string" &&
+            isOptionalString(alert.trigger),
         ))) ||
     (value.maturities !== undefined &&
       (!Array.isArray(value.maturities) ||
@@ -244,5 +274,6 @@ export function parseClientAnalyses(value: unknown): ClientAnalysesResponse | nu
     alerts: value.alerts as RiskAlert[] | undefined,
     maturities: value.maturities as InvestmentMaturity[] | undefined,
     isMock: value.isMock === true,
+    calculatedOn: typeof value.calculatedOn === "string" ? value.calculatedOn : undefined,
   };
 }

@@ -17,9 +17,11 @@ const tabs: { id: Tab; label: string; icon: typeof ShieldCheck }[] = [
 
 export function ClientDetailTabs({
   clientId,
+  clientName,
   overview,
 }: {
   clientId: number;
+  clientName: string;
   overview: ReactNode;
 }) {
   const [activeTab, setActiveTab] = useState<Tab>("overview");
@@ -63,7 +65,13 @@ export function ClientDetailTabs({
   } else if (activeTab === "fgc") {
     content = <FgcExposurePanel analysis={data?.fgcAnalysis} isMock={data?.isMock} />;
   } else if (activeTab === "credit") {
-    content = <CreditScorePanel assessment={data?.creditAssessment} isMock={data?.isMock} />;
+    content = (
+      <CreditScorePanel
+        assessment={data?.creditAssessment}
+        isMock={data?.isMock}
+        clientName={clientName}
+      />
+    );
   } else {
     content = <MaturitiesAlertsPanel data={data} />;
   }
@@ -116,6 +124,11 @@ function MaturitiesAlertsPanel({ data }: { data: ClientAnalysesResponse | null }
   const alerts = data?.alerts;
   const money = (value: number) =>
     new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(value);
+  const windows = [
+    { label: "Até 30 dias", min: 0, max: 30 },
+    { label: "31 a 60 dias", min: 31, max: 60 },
+    { label: "61 a 90 dias", min: 61, max: 90 },
+  ];
 
   return (
     <div className="detail-columns">
@@ -127,6 +140,27 @@ function MaturitiesAlertsPanel({ data }: { data: ClientAnalysesResponse | null }
           </div>
           {data?.isMock && <span className="analysis-sample">Dados fictícios</span>}
         </div>
+        <p className="analysis-origin">
+          Prazos calculados em{" "}
+          {data?.calculatedOn ? formatDate(data.calculatedOn) : "data não informada"} · Posições
+          fictícias com data-base em 10/10/2026.
+        </p>
+        {maturities && (
+          <div className="maturity-windows">
+            {windows.map((window) => (
+              <div key={window.label}>
+                <strong>
+                  {
+                    maturities.filter(
+                      (item) => item.daysUntil >= window.min && item.daysUntil <= window.max,
+                    ).length
+                  }
+                </strong>
+                <span>{window.label}</span>
+              </div>
+            ))}
+          </div>
+        )}
         {maturities === undefined ? (
           <p className="analysis-muted">Datas de vencimento indisponíveis.</p>
         ) : maturities.length === 0 ? (
@@ -137,6 +171,15 @@ function MaturitiesAlertsPanel({ data }: { data: ClientAnalysesResponse | null }
               <div className="maturity-item" key={maturity.positionId}>
                 <div>
                   <strong>{maturity.productName}</strong>
+                  {maturity.daysUntil <= 90 && (
+                    <span className="maturity-badge">
+                      {maturity.daysUntil <= 30
+                        ? "Até 30 dias"
+                        : maturity.daysUntil <= 60
+                          ? "31 a 60 dias"
+                          : "61 a 90 dias"}
+                    </span>
+                  )}
                   <small>
                     {formatDate(maturity.maturityDate)} · em {maturity.daysUntil} dias
                   </small>
@@ -168,6 +211,11 @@ function MaturitiesAlertsPanel({ data }: { data: ClientAnalysesResponse | null }
                   <span data-severity={alert.severity}>{alert.severity}</span>
                 </div>
                 <p>{alert.description}</p>
+                {alert.trigger && (
+                  <p>
+                    <strong>Motivo:</strong> {alert.trigger}
+                  </p>
+                )}
                 <small>
                   Relacionado a {alert.relatedTo} · {alert.status} · {formatDate(alert.asOf)}
                 </small>
