@@ -147,6 +147,7 @@ export const getClientById = (id: string | number) =>
   clients.find((client) => client.id === Number(id));
 
 // Campos de perfil sintéticos e documentos mascarados para a página de detalhes.
+// Datas de nascimento em ISO permitem comparar dia e mês sem analisar texto formatado.
 export const clientProfiles: Record<
   number,
   {
@@ -161,7 +162,7 @@ export const clientProfiles: Record<
 > = {
   1: {
     document: "***.***.***-42",
-    birthDate: "14 de jul. de 1987",
+    birthDate: "1987-10-14",
     occupation: "Profissional liberal",
     phone: "Não informado",
     address: "São Paulo, SP",
@@ -170,7 +171,7 @@ export const clientProfiles: Record<
   },
   2: {
     document: "***.***.***-18",
-    birthDate: "2 de fev. de 1982",
+    birthDate: "1982-02-02",
     occupation: "Empresário",
     phone: "Não informado",
     address: "Campinas, SP",
@@ -179,7 +180,7 @@ export const clientProfiles: Record<
   },
   3: {
     document: "***.***.***-73",
-    birthDate: "23 de set. de 1990",
+    birthDate: "1990-09-23",
     occupation: "Administradora",
     phone: "Não informado",
     address: "Curitiba, PR",
@@ -188,7 +189,7 @@ export const clientProfiles: Record<
   },
   4: {
     document: "***.***.***-56",
-    birthDate: "11 de abr. de 1979",
+    birthDate: "1979-04-11",
     occupation: "Engenheiro",
     phone: "Não informado",
     address: "Belo Horizonte, MG",
@@ -197,7 +198,7 @@ export const clientProfiles: Record<
   },
   5: {
     document: "***.***.***-09",
-    birthDate: "5 de dez. de 1993",
+    birthDate: "1993-10-10",
     occupation: "Empreendedora",
     phone: "Não informado",
     address: "Rio de Janeiro, RJ",
@@ -206,7 +207,7 @@ export const clientProfiles: Record<
   },
   6: {
     document: "***.***.***-31",
-    birthDate: "17 de mar. de 1985",
+    birthDate: "1985-03-17",
     occupation: "Professor",
     phone: "Não informado",
     address: "Porto Alegre, RS",

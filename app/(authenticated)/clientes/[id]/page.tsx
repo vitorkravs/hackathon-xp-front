@@ -1,8 +1,18 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft, CalendarClock, Landmark, ShieldCheck, TrendingUp, Wallet } from "lucide-react";
+import {
+  ArrowLeft,
+  Cake,
+  CalendarClock,
+  Landmark,
+  ShieldCheck,
+  TrendingUp,
+  Wallet,
+} from "lucide-react";
 import { clientProfiles, getClientById, money } from "@/lib/mock-data";
-import { getLargestIssuerExposure, getMockMaturities, todayInSaoPaulo } from "@/lib/mock-analyses";
+import { birthdayLabel, formatBirthDate, getClientBirthday } from "@/lib/client-birthdays";
+import { getLargestIssuerExposure, getMockMaturities } from "@/lib/mock-analyses";
+import { todayInSaoPaulo } from "@/lib/local-date";
 import { getMockPositions, SIMULATION_AS_OF } from "@/lib/mock-positions";
 import { Avatar, Status } from "../../components/ClientVisuals";
 import { ClientDetailTabs } from "./ClientDetailTabs";
@@ -23,6 +33,7 @@ export default async function ClienteDetalhePage({ params }: { params: Promise<{
   const positions = getMockPositions(client.id);
   const largestIssuer = getLargestIssuerExposure(positions);
   const calculatedOn = todayInSaoPaulo();
+  const birthday = getClientBirthday(client, calculatedOn);
   const nextMaturity = getMockMaturities(positions, calculatedOn)[0];
   const fixedIncomeShare =
     client.allocation.find((item) => item.label === "Renda fixa")?.value ?? 0;
@@ -31,7 +42,7 @@ export default async function ClienteDetalhePage({ params }: { params: Promise<{
     ["Nome completo", client.name],
     ["Documento", profile.document],
     ["Tipo de documento", "CPF"],
-    ["Data de nascimento", profile.birthDate],
+    ["Data de nascimento", formatBirthDate(profile.birthDate)],
     ["Cargo", profile.occupation],
     ["E-mail pessoal", client.email],
     ["Telefone residencial", profile.phone],
@@ -53,6 +64,21 @@ export default async function ClienteDetalhePage({ params }: { params: Promise<{
           <p>Informações pessoais, carteira e pontos de atenção em um só lugar.</p>
         </div>
       </div>
+
+      {birthday && (
+        <section className="birthday-profile-notice" aria-label="Aviso de aniversário">
+          <Cake size={23} aria-hidden="true" />
+          <div>
+            <strong>
+              {birthdayLabel(birthday)}: {client.name}
+            </strong>
+            <span>
+              {String(birthday.day).padStart(2, "0")}/{String(birthday.month).padStart(2, "0")} ·
+              Dado cadastral fictício
+            </span>
+          </div>
+        </section>
+      )}
 
       <p className="detail-data-notice">
         Todos os clientes, saldos, posições, conexões e análises desta tela são fictícios. Nenhum

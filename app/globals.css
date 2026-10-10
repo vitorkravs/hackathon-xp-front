@@ -3033,3 +3033,112 @@ tbody tr:hover {
     grid-template-columns: 1fr;
   }
 }
+
+.birthday-notice,
+.birthday-profile-notice {
+  border: 1px solid #e8ce75;
+  border-left: 4px solid #d8ad1e;
+  border-radius: 10px;
+  background: #fffaf0;
+  color: var(--ink);
+}
+
+.birthday-notice {
+  padding: 16px 18px;
+  margin-bottom: 18px;
+}
+
+.birthday-notice-heading,
+.birthday-profile-notice {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.birthday-notice-heading svg,
+.birthday-profile-notice > svg {
+  color: #a47a00;
+  flex: 0 0 auto;
+}
+
+.birthday-notice h2 {
+  margin: 0;
+  font-size: 14px;
+}
+
+.birthday-notice p {
+  margin: 4px 0 0;
+  color: var(--text-soft);
+  font-size: 11px;
+}
+
+.birthday-notice-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  gap: 9px;
+  margin-top: 13px;
+}
+
+.birthday-notice-list a {
+  display: grid;
+  gap: 4px;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--ink);
+  text-decoration: none;
+  transition:
+    transform 0.18s ease,
+    border-color 0.18s ease;
+}
+
+.birthday-notice-list a:hover {
+  transform: translateY(-2px);
+  border-color: #d8ad1e;
+}
+
+.birthday-notice-list strong,
+.birthday-profile-notice strong {
+  font-size: 12px;
+}
+
+.birthday-notice-list span,
+.birthday-profile-notice span {
+  color: var(--text-soft);
+  font-size: 11px;
+}
+
+.birthday-row-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  width: fit-content;
+  border-radius: 999px;
+  padding: 3px 7px;
+  background: #fff2c8;
+  color: #795900;
+  font-size: 9px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.birthday-profile-notice {
+  padding: 14px 16px;
+}
+
+.birthday-profile-notice > div {
+  display: grid;
+  gap: 4px;
+}
+
+.app-shell[data-theme="dark"] .birthday-notice,
+.app-shell[data-theme="dark"] .birthday-profile-notice {
+  background: #302b1b;
+  border-color: #79601d;
+}
+
+.app-shell[data-theme="dark"] .birthday-row-badge {
+  background: #40371e;
+  color: #f2d375;
+}

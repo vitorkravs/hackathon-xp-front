@@ -8,6 +8,7 @@ import type {
   RiskAlert,
 } from "./analysis-contract";
 import { getClientById, type Client } from "./mock-data";
+import { todayInSaoPaulo } from "./local-date";
 import { getMockPositions, SIMULATION_AS_OF, type MockPosition } from "./mock-positions";
 
 const SOURCE = "Carteira fictícia da simulação";
@@ -15,18 +16,6 @@ const ORDINARY_LIMIT = 250000;
 const eligibleProducts = new Set(["CDB", "LCI", "LCA"]);
 const currency = (value: number) =>
   new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(value);
-
-// Usa o calendário de São Paulo; a data da carteira continua sendo a data-base da simulação.
-export function todayInSaoPaulo(): string {
-  const parts = new Intl.DateTimeFormat("en-US", {
-    timeZone: "America/Sao_Paulo",
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-  }).formatToParts(new Date());
-  const value = (type: string) => parts.find((part) => part.type === type)?.value ?? "";
-  return `${value("year")}-${value("month")}-${value("day")}`;
-}
 
 export const creditWeights: Record<CreditFactorKey, number> = {
   paymentCapacityScore: 0.25,

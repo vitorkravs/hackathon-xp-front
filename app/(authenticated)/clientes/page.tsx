@@ -1,17 +1,36 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, useSyncExternalStore } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Download, Filter, Plus, Search } from "lucide-react";
+import { Cake, Download, Filter, Plus, Search } from "lucide-react";
 import { clients, type Client } from "@/lib/mock-data";
+import { birthdayLabel, getUpcomingClientBirthdays } from "@/lib/client-birthdays";
+import { todayInSaoPaulo } from "@/lib/local-date";
 import { ClientsTable } from "../components/ClientsTable";
 import { InviteModal } from "../components/InviteModal";
+
+function subscribeToCalendar(onChange: () => void) {
+  // Atualiza o aviso com a virada do dia e quando a aba volta a ficar ativa.
+  const interval = window.setInterval(onChange, 60_000);
+  window.addEventListener("focus", onChange);
+  return () => {
+    window.clearInterval(interval);
+    window.removeEventListener("focus", onChange);
+  };
+}
 
 export default function ClientesPage() {
   const router = useRouter();
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState("Todos");
   const [inviteOpen, setInviteOpen] = useState(false);
+  const todayIso = useSyncExternalStore(
+    subscribeToCalendar,
+    () => todayInSaoPaulo(),
+    () => null,
+  );
+  const birthdays = todayIso ? getUpcomingClientBirthdays(clients, todayIso) : [];
   const filtered = useMemo(
     () =>
       clients.filter((client) => {
@@ -72,6 +91,28 @@ export default function ClientesPage() {
             <Plus size={18} /> Convidar cliente
           </button>
         </div>
+        {birthdays.length > 0 && (
+          <section className="birthday-notice" aria-labelledby="birthday-notice-title">
+            <div className="birthday-notice-heading">
+              <Cake size={20} aria-hidden="true" />
+              <div>
+                <h2 id="birthday-notice-title">Aniversários deste mês</h2>
+                <p>Clientes que fazem aniversário hoje ou nos próximos dias deste mês.</p>
+              </div>
+            </div>
+            <div className="birthday-notice-list">
+              {birthdays.map((birthday) => (
+                <Link href={`/clientes/${birthday.client.id}`} key={birthday.client.id}>
+                  <strong>{birthday.client.name}</strong>
+                  <span>
+                    {birthdayLabel(birthday)} · {String(birthday.day).padStart(2, "0")}/
+                    {String(birthday.month).padStart(2, "0")}
+                  </span>
+                </Link>
+              ))}
+            </div>
+          </section>
+        )}
         <div className="list-tools">
           <div className="search-field">
             <Search size={18} />
@@ -99,7 +140,7 @@ export default function ClientesPage() {
             <Download size={17} /> Exportar CSV
           </button>
         </div>
-        <ClientsTable filtered={filtered} onOpen={openClient} />
+        <ClientsTable filtered={filtered} onOpen={openClient} todayIso={todayIso ?? undefined} />
       </div>
       <InviteModal open={inviteOpen} onClose={() => setInviteOpen(false)} />
     </>

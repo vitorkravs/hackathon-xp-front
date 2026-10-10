@@ -1,7 +1,8 @@
 "use client";
 
-import { ArrowDownRight, ArrowRight, ArrowUpRight, ChevronRight, Search } from "lucide-react";
+import { ArrowDownRight, ArrowRight, ArrowUpRight, Cake, ChevronRight, Search } from "lucide-react";
 import { Client, clients, money } from "@/lib/mock-data";
+import { birthdayLabel, getClientBirthday } from "@/lib/client-birthdays";
 import { Avatar, Status } from "./ClientVisuals";
 
 export function ClientsTable({
@@ -9,11 +10,13 @@ export function ClientsTable({
   onOpen,
   onAll,
   compact = false,
+  todayIso,
 }: {
   filtered: Client[];
   onOpen: (client: Client) => void;
   onAll?: () => void;
   compact?: boolean;
+  todayIso?: string;
 }) {
   return (
     <section className="panel clients-panel">
@@ -46,42 +49,54 @@ export function ClientsTable({
             </tr>
           </thead>
           <tbody>
-            {filtered.map((client) => (
-              <tr
-                key={client.id}
-                onClick={() => onOpen(client)}
-                tabIndex={0}
-                onKeyDown={(event) => {
-                  if (event.key === "Enter") onOpen(client);
-                }}
-              >
-                <td>
-                  <span className="table-person">
-                    <Avatar client={client} />
-                    <span>
-                      <strong>{client.name}</strong>
-                      <small>{client.email}</small>
+            {filtered.map((client) => {
+              const birthday = todayIso ? getClientBirthday(client, todayIso) : null;
+              return (
+                <tr
+                  key={client.id}
+                  onClick={() => onOpen(client)}
+                  tabIndex={0}
+                  onKeyDown={(event) => {
+                    if (event.key === "Enter") onOpen(client);
+                  }}
+                >
+                  <td>
+                    <span className="table-person">
+                      <Avatar client={client} />
+                      <span>
+                        <strong>{client.name}</strong>
+                        <small>{client.email}</small>
+                        {birthday && (
+                          <span className="birthday-row-badge">
+                            <Cake size={12} aria-hidden="true" /> {birthdayLabel(birthday)}
+                          </span>
+                        )}
+                      </span>
                     </span>
-                  </span>
-                </td>
-                <td>
-                  <span className="profile-pill">{client.profile}</span>
-                </td>
-                <td className="amount-cell">{money(client.assets)}</td>
-                <td>
-                  <span className={`change-cell ${client.change >= 0 ? "positive" : "negative"}`}>
-                    {client.change >= 0 ? <ArrowUpRight size={16} /> : <ArrowDownRight size={16} />}
-                    {Math.abs(client.change).toFixed(1).replace(".", ",")}%
-                  </span>
-                </td>
-                <td>
-                  <Status status={client.consent} />
-                </td>
-                <td>
-                  <ChevronRight size={18} className="row-chevron" />
-                </td>
-              </tr>
-            ))}
+                  </td>
+                  <td>
+                    <span className="profile-pill">{client.profile}</span>
+                  </td>
+                  <td className="amount-cell">{money(client.assets)}</td>
+                  <td>
+                    <span className={`change-cell ${client.change >= 0 ? "positive" : "negative"}`}>
+                      {client.change >= 0 ? (
+                        <ArrowUpRight size={16} />
+                      ) : (
+                        <ArrowDownRight size={16} />
+                      )}
+                      {Math.abs(client.change).toFixed(1).replace(".", ",")}%
+                    </span>
+                  </td>
+                  <td>
+                    <Status status={client.consent} />
+                  </td>
+                  <td>
+                    <ChevronRight size={18} className="row-chevron" />
+                  </td>
+                </tr>
+              );
+            })}
           </tbody>
         </table>
         {filtered.length === 0 && (

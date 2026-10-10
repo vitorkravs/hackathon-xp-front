@@ -66,18 +66,20 @@ A aplicação ficará disponível em [http://localhost:3000](http://localhost:30
 
 ## Funcionalidades e rotas
 
-| Rota                       | Conteúdo                                                                                 |
-| -------------------------- | ---------------------------------------------------------------------------------------- |
-| `/`                        | Login do assessor                                                                        |
-| `/esqueceu-sua-senha`      | Criação local do link de recuperação                                                     |
-| `/recuperar-senha/[token]` | Redefinição da senha mockada                                                             |
-| `/dashboard`               | Indicadores e visão geral da carteira fictícia                                           |
-| `/clientes`                | Busca, filtros, exportação CSV e convite ilustrativo                                     |
-| `/clientes/[id]`           | Cadastro, posições, composição da carteira, FGC, risco de crédito, vencimentos e alertas |
-| `/conexoes`                | Visão dos consentimentos e conexões simuladas                                            |
-| `/oportunidades`           | Oportunidades de acompanhamento ilustrativas                                             |
+| Rota                       | Conteúdo                                                                      |
+| -------------------------- | ----------------------------------------------------------------------------- |
+| `/`                        | Login do assessor                                                             |
+| `/esqueceu-sua-senha`      | Criação local do link de recuperação                                          |
+| `/recuperar-senha/[token]` | Redefinição da senha mockada                                                  |
+| `/dashboard`               | Indicadores e visão geral da carteira fictícia                                |
+| `/clientes`                | Busca, filtros, aniversários do mês, exportação CSV e convite ilustrativo     |
+| `/clientes/[id]`           | Cadastro, aviso de aniversário, carteira, FGC, crédito, vencimentos e alertas |
+| `/conexoes`                | Visão dos consentimentos e conexões simuladas                                 |
+| `/oportunidades`           | Oportunidades de acompanhamento ilustrativas                                  |
 
 As rotas de assessor exigem o cookie da sessão mockada. A interface oferece tema claro/escuro, sidebar recolhível e escolha entre ícones animados ou estáticos. Essas preferências ficam no navegador. As animações respeitam a preferência de movimento reduzido do sistema.
+
+Os avisos de aniversário mostram clientes que fazem aniversário hoje ou ainda neste mês. As datas são calculadas pelo calendário de São Paulo; dois cadastros fictícios têm aniversários em outubro para facilitar a visualização do recurso.
 
 ## Organização do código
 
